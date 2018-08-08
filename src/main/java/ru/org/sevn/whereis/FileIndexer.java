@@ -27,7 +27,7 @@ public class FileIndexer {
 
     public static final String EXCLUDE_FILE_MARKER = ".noindex";
     
-    private final Indexer indexer= new Indexer();
+    private final Indexer indexer= new QueueIndexer(20);
     private final MetadataExtractor metadataExtractor = new MetadataExtractor();
 
     public Indexer getIndexer() {

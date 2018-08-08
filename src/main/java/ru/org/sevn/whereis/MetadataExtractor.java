@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import org.apache.tika.config.TikaConfig;
@@ -113,6 +114,7 @@ public class MetadataExtractor {
         metadata.add(MetaParam.PATH, path.toAbsolutePath().toString());
         metadata.add(MetaParam.STORE_ID, storeId);
         metadata.add(MetaParam.ID, makeId(storeId, root, path));
+        metadata.add(MetaParam.INDEXED_AT, DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.now().atZone(ZoneId.systemDefault())));
         readFileAttr(path, attr, metadata);
         if (!attr.isDirectory()) {
         

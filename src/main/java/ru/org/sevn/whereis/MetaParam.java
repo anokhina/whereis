@@ -21,6 +21,7 @@ public class MetaParam {
     public static final String PATH = "path";
     public static final String TEXT = "text";
     public static final String TITLE = "title";
+    public static final String INDEXED_AT = "indexedAt";
     
     public static final String FILE_CREATIONTIME = "file:creationTime";
     public static final String FILE_LASTACCESSTIME = "file:lastAccessTime";

@@ -59,21 +59,23 @@ public class Indexer {
     }
     
     public void index(final Metadata ... metadata) throws IOException {
-
-        final IndexWriter w = new IndexWriter(index, getIndexWriterConfig());
-        try {
-            for (final Metadata m : metadata) {
-                add(w, m);
+        if (metadata != null) {
+            final IndexWriter w = new IndexWriter(index, getIndexWriterConfig());
+            try {
+                for (final Metadata m : metadata) {
+                    add(w, m);
+                }
+                w.commit();
+            } finally {
+                System.out.println("+++++++++++++++++++++++++++++");
+                w.close();
             }
-            w.commit();
-        } finally {
-            System.out.println("+++++++++++++++++++++++++++++");
-            w.close();
         }
-        
     }
     
-    public void add(final IndexWriter w, final Metadata metadata) throws IOException {
+    public void commit() throws IOException {}
+    
+    void add(final IndexWriter w, final Metadata metadata) throws IOException {
         final Document doc = new Document();
         for (final String n : metadata.names()) {
             doc.add(getField(n, metadata.get(n)));
@@ -96,13 +98,17 @@ public class Indexer {
         }
         return Field.Store.YES;
     }
+    
+    protected void aboutFind() throws IOException {}
 
     public List<Document> find(final int hitsPerPage, final String querystr) throws IOException, ParseException {
+        aboutFind();
         Query q = new QueryParser(MetaParam.FILE_NAME, analyzer).parse(querystr);//TODO
         return find(hitsPerPage, q);
     }
     
     public List<Document> find(final int hitsPerPage, final Query q) throws IOException {
+        aboutFind();
         final ArrayList<Document> ret = new ArrayList<>();
         final IndexReader reader = DirectoryReader.open(index);
         try {
@@ -122,6 +128,7 @@ public class Indexer {
     }
     
     private Document findByField(final IndexReader reader, final String fieldName, final String text) throws IOException {
+        aboutFind();
         IndexSearcher searcher = new IndexSearcher(reader);
         TopDocs td = searcher.search(
             new BooleanQuery.Builder().add(new TermQuery(new Term(fieldName, text)), BooleanClause.Occur.SHOULD).build()
