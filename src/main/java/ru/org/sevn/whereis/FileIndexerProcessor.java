@@ -40,6 +40,8 @@ public class FileIndexerProcessor implements FileProcessor {
     public void startIndexing(final Path path, final FileWalker fileWalker) throws IOException {
         final Metadata metadata = new Metadata();
         metadata.add(MetaParam.ID, MetadataExtractor.makeId(storeId, root, path));
+        metadata.add(MetaParam.STORE_ID, storeId);
+        metadata.add(MetaParam.PATH, path.toString());
         indexer.index(addIndexInfo(metadata));
         
         Files.walkFileTree(path, fileWalker);

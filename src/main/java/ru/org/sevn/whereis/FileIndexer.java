@@ -54,7 +54,9 @@ public class FileIndexer {
         } catch (ParseException ex) {
             Logger.getLogger(Indexer.class.getName()).log(Level.SEVERE, null, ex);
         }
-        DocUtil.printDoc(fi.getIndexer().findByField(MetaParam.ID, "zzz:", 10));
+        DocUtil.printDoc(fi.getIndexer().findByField(10, MetaParam.ID, "zzz:"));
+        //DocUtil.printDoc(fi.getIndexer().findByFields(10, MetaParam.ID, "zzz:", MetaParam.STORE_ID, "zzz"));
+        //DocUtil.printDoc(fi.getIndexer().findByFields(10, MetaParam.STORE_ID, "zzz"));
         //DocUtil.printDoc(fi.getIndexer().find(10, "test*"));
     }
 }

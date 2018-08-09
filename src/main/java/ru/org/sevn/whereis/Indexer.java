@@ -17,7 +17,9 @@ package ru.org.sevn.whereis;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -122,19 +124,48 @@ public class Indexer {
         return ret;
     }
     
-    public List<Document> findByField(final String fieldName, final String text, final int limit) throws IOException {
+    public List<Document> findByFields(final int limit, final String ... fieldValues) throws IOException {
+        final HashMap<String, String> map = new HashMap<>();
+        for(int i = 1; i < fieldValues.length; i+= 2) {
+            map.put(fieldValues[i-1], fieldValues[i]);
+        }
+        return findByFields(limit, map);
+    }
+    
+    public List<Document> findByField(final int limit, final String fieldName, final String text) throws IOException {
         try (IndexReader reader = DirectoryReader.open(index)) {
-            return findByField(reader, fieldName, text, limit);
+            return findByField(limit, reader, fieldName, text);
         }
     }
     
-    List<Document> findByField(final IndexReader reader, final String fieldName, final String text, final int limit) throws IOException {
+    List<Document> findByField(final int limit, final IndexReader reader, final String fieldName, final String text) throws IOException {
         aboutFind();
         final ArrayList<Document> result = new ArrayList<>();
         final IndexSearcher searcher = new IndexSearcher(reader);
         final TopDocs td = searcher.search(
-            new BooleanQuery.Builder().add(new TermQuery(new Term(fieldName, text)), BooleanClause.Occur.SHOULD).build()
+            new BooleanQuery.Builder().add(new TermQuery(new Term(fieldName, text)), BooleanClause.Occur.MUST).build()
                 , limit);
+        for (final ScoreDoc sd : td.scoreDocs) {
+            result.add(reader.document(sd.doc));
+        }
+        return result;
+    }
+    
+    public List<Document> findByFields(final int limit, final Map<String, String> fieldValues) throws IOException {
+        try (IndexReader reader = DirectoryReader.open(index)) {
+            return findByFields(limit, reader, fieldValues);
+        }
+    }
+    
+    List<Document> findByFields(final int limit, final IndexReader reader, final Map<String, String> fieldValues) throws IOException {
+        aboutFind();
+        final ArrayList<Document> result = new ArrayList<>();
+        final IndexSearcher searcher = new IndexSearcher(reader);
+        final BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        for (final String fieldName : fieldValues.keySet()) {
+            builder.add(new TermQuery(new Term(fieldName, fieldValues.get(fieldName))), BooleanClause.Occur.MUST);
+        }
+        final TopDocs td = searcher.search(builder.build(), limit);
         for (final ScoreDoc sd : td.scoreDocs) {
             result.add(reader.document(sd.doc));
         }
