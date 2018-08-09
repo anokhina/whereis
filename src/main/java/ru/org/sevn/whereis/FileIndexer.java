@@ -17,7 +17,6 @@ package ru.org.sevn.whereis;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,10 +38,9 @@ public class FileIndexer {
     }
 
     public void processDir(final String storeid, final Path path) throws IOException {
-        final FileIndexerProcessor fileIndexerProcessor = new FileIndexerProcessor(storeid, path, indexer, metadataExtractor);
-        final FileWalker fileWalker = new FileWalker(fileIndexerProcessor, EXCLUDE_FILE_MARKER);
+        final FileIndexerProcessor fileIndexerProcessor = new FileIndexerProcessor(System.currentTimeMillis(), storeid, path, indexer, metadataExtractor);
         
-        Files.walkFileTree(path, fileWalker);
+        fileIndexerProcessor.startIndexing(path, new FileWalker(fileIndexerProcessor, EXCLUDE_FILE_MARKER));
     }
 
     public static void main(String[] args) throws Exception {
@@ -56,6 +54,8 @@ public class FileIndexer {
         } catch (ParseException ex) {
             Logger.getLogger(Indexer.class.getName()).log(Level.SEVERE, null, ex);
         }
+        DocUtil.printDoc(fi.getIndexer().findByField(MetaParam.ID, "zzz:", 10));
         //DocUtil.printDoc(fi.getIndexer().find(10, "test*"));
     }
 }
+//https://habr.com/post/277509/

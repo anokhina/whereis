@@ -18,8 +18,6 @@ package ru.org.sevn.whereis;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -110,8 +108,7 @@ public class Indexer {
     public List<Document> find(final int hitsPerPage, final Query q) throws IOException {
         aboutFind();
         final ArrayList<Document> ret = new ArrayList<>();
-        final IndexReader reader = DirectoryReader.open(index);
-        try {
+        try (IndexReader reader = DirectoryReader.open(index)) {
             final IndexSearcher searcher = new IndexSearcher(reader);
             final TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage);
             
@@ -121,21 +118,26 @@ public class Indexer {
             for (int i = 0; i < hits.length; ++i) {
                 ret.add(searcher.doc(hits[i].doc));
             }
-        } finally {
-            reader.close();
         }
         return ret;
     }
     
-    private Document findByField(final IndexReader reader, final String fieldName, final String text) throws IOException {
-        aboutFind();
-        IndexSearcher searcher = new IndexSearcher(reader);
-        TopDocs td = searcher.search(
-            new BooleanQuery.Builder().add(new TermQuery(new Term(fieldName, text)), BooleanClause.Occur.SHOULD).build()
-                , 1);
-        if (td.scoreDocs.length > 0) {
-            return reader.document(td.scoreDocs[0].doc);
+    public List<Document> findByField(final String fieldName, final String text, final int limit) throws IOException {
+        try (IndexReader reader = DirectoryReader.open(index)) {
+            return findByField(reader, fieldName, text, limit);
         }
-        return null;
+    }
+    
+    List<Document> findByField(final IndexReader reader, final String fieldName, final String text, final int limit) throws IOException {
+        aboutFind();
+        final ArrayList<Document> result = new ArrayList<>();
+        final IndexSearcher searcher = new IndexSearcher(reader);
+        final TopDocs td = searcher.search(
+            new BooleanQuery.Builder().add(new TermQuery(new Term(fieldName, text)), BooleanClause.Occur.SHOULD).build()
+                , limit);
+        for (final ScoreDoc sd : td.scoreDocs) {
+            result.add(reader.document(sd.doc));
+        }
+        return result;
     }
 }

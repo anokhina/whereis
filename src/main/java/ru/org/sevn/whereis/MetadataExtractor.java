@@ -25,9 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -85,7 +82,7 @@ public class MetadataExtractor {
     
     private void readFileAttr(final Path path, final BasicFileAttributes attr, final Metadata metadata) throws IOException {
         metadata.add(MetaParam.FILE_CREATIONTIME, str(attr.creationTime()));
-        metadata.add(MetaParam.FILE_LASTACCESSTIME, str(attr.lastAccessTime()));
+        //metadata.add(MetaParam.FILE_LASTACCESSTIME, str(attr.lastAccessTime()));
         metadata.add(MetaParam.FILE_LASTMODIFIEDTIME, str(attr.lastModifiedTime()));
 
         metadata.add(MetaParam.FILE_ISDIRECTORY, str(attr.isDirectory()));
@@ -103,7 +100,8 @@ public class MetadataExtractor {
         return "" + b;
     }
     private String str(FileTime b) {
-        return DateTimeFormatter.ISO_DATE_TIME.format(b.toInstant().atZone(ZoneId.systemDefault()));
+        //return DateTimeFormatter.ISO_DATE_TIME.format(b.toInstant().atZone(ZoneId.systemDefault()));
+        return "" + b.toMillis();
     }
     
     public Metadata parse(final String storeId, final Path root, final Path path) throws IOException, SAXException, TikaException {
@@ -114,7 +112,6 @@ public class MetadataExtractor {
         metadata.add(MetaParam.PATH, path.toAbsolutePath().toString());
         metadata.add(MetaParam.STORE_ID, storeId);
         metadata.add(MetaParam.ID, makeId(storeId, root, path));
-        metadata.add(MetaParam.INDEXED_AT, DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.now().atZone(ZoneId.systemDefault())));
         readFileAttr(path, attr, metadata);
         if (!attr.isDirectory()) {
         
@@ -131,7 +128,7 @@ public class MetadataExtractor {
         return metadata;
     }
     
-    private String makeId(final String storeId, final Path root, final Path path) {
+    static String makeId(final String storeId, final Path root, final Path path) {
         return storeId + ":" + root.relativize(path);
     }
     
@@ -150,6 +147,5 @@ public class MetadataExtractor {
                 System.out.println("==" + n + "=" + metadata.get(n));
             }
         }
-        // /mnt/winh/pub/Зачисление\ в\ 5\ класс.docx
     }    
 }

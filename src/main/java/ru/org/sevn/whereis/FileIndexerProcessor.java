@@ -15,8 +15,11 @@
  */
 package ru.org.sevn.whereis;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import org.apache.tika.metadata.Metadata;
 
 public class FileIndexerProcessor implements FileProcessor {
     
@@ -24,18 +27,35 @@ public class FileIndexerProcessor implements FileProcessor {
     private final MetadataExtractor metadataExtractor;
     private final String storeId;
     private final Path root;
+    private final long indexAt;
     
-    public FileIndexerProcessor(final String storeId, final Path root, final Indexer indexer, final MetadataExtractor metadataExtractor) {
+    public FileIndexerProcessor(final long indexAt, final String storeId, final Path root, final Indexer indexer, final MetadataExtractor metadataExtractor) {
+        this.indexAt = indexAt;
         this.storeId = storeId;
         this.root = root;
         this.indexer = indexer;
         this.metadataExtractor = metadataExtractor;
     }
+    
+    public void startIndexing(final Path path, final FileWalker fileWalker) throws IOException {
+        final Metadata metadata = new Metadata();
+        metadata.add(MetaParam.ID, MetadataExtractor.makeId(storeId, root, path));
+        indexer.index(addIndexInfo(metadata));
+        
+        Files.walkFileTree(path, fileWalker);
+        indexer.commit();
+    }
 
     @Override
     public void processFile(final Path file, BasicFileAttributes attrs) throws Exception {
-        //TODO
-        indexer.index(metadataExtractor.parse(storeId, root, file, attrs));
+        indexer.index(addIndexInfo(metadataExtractor.parse(storeId, root, file, attrs)));
+    }
+    
+    Metadata[] addIndexInfo(final Metadata... metadata) {
+        for (final Metadata m : metadata) {
+            m.add(MetaParam.INDEXED_AT, "" + indexAt);
+        }
+        return metadata;
     }
 
     public Indexer getIndexer() {
