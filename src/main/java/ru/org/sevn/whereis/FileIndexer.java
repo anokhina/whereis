@@ -47,10 +47,10 @@ public class FileIndexer {
         final FileIndexerProcessor fileIndexerProcessor = new FileIndexerProcessor(indexTime, storeid, path, indexer, metadataExtractor);
         
         fileIndexerProcessor.startIndexing(path, new FileWalker(fileIndexerProcessor, EXCLUDE_FILE_MARKER));
-        removeUnexisted(indexTime, storeid);
+        removeNotExisted(indexTime, storeid);
     }
     
-    void removeUnexisted(final long indexTime, final String storeid) throws IOException {
+    void removeNotExisted(final long indexTime, final String storeid) throws IOException {
         try {  
             final Query q = new QueryParser(MetaParam.ID, new CaseSensitiveStandardAnalyzer()).parse(
                     new SimpleQueryBuilder()
