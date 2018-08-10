@@ -42,7 +42,7 @@ public class DocUtil {
                 case MetaParam.FILE_LASTACCESSTIME:
                 case MetaParam.FILE_LASTMODIFIEDTIME:
                     System.out.println(">["+f.name()+"] " + printMS(f.stringValue()));
-                    break;
+                    //break;
                 default:
                     System.out.println(">["+f.name()+"] " + f.stringValue());
             }

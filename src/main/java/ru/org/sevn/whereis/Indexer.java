@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -60,18 +61,24 @@ public class Indexer {
         return new IndexWriterConfig(analyzer);
     }
     
+    public void inWriter(final ThrowableConsumer<IndexWriter, IOException> consumer) throws IOException {
+        final IndexWriter w = new IndexWriter(index, getIndexWriterConfig());
+        try {
+            consumer.accept(w);
+            w.commit();
+        } finally {
+            System.out.println("+++++++++++++++++++++++++++++");
+            w.close();
+        }
+    }
+    
     public void index(final Metadata ... metadata) throws IOException {
         if (metadata != null) {
-            final IndexWriter w = new IndexWriter(index, getIndexWriterConfig());
-            try {
+            inWriter(w -> {
                 for (final Metadata m : metadata) {
                     add(w, m);
                 }
-                w.commit();
-            } finally {
-                System.out.println("+++++++++++++++++++++++++++++");
-                w.close();
-            }
+            });
         }
     }
     
@@ -147,11 +154,7 @@ public class Indexer {
     }
     
     public List<Document> findByFields(final int limit, final String ... fieldValues) throws IOException {
-        final HashMap<String, String> map = new HashMap<>();
-        for(int i = 1; i < fieldValues.length; i+= 2) {
-            map.put(fieldValues[i-1], fieldValues[i]);
-        }
-        return findByFields(limit, map);
+        return findByFields(limit, findByFieldsQuery(fieldValues).build());
     }
     
     public List<Document> findByField(final int limit, final String fieldName, final String text) throws IOException {
@@ -174,23 +177,40 @@ public class Indexer {
     }
     
     public List<Document> findByFields(final int limit, final Map<String, String> fieldValues) throws IOException {
+        return findByFields(limit, findByFieldsQuery(fieldValues).build());
+    }
+    
+    public List<Document> findByFields(final int limit, final Query q) throws IOException {
         try (IndexReader reader = DirectoryReader.open(index)) {
-            return findByFields(limit, reader, fieldValues);
+            return findByFields(limit, reader, q);
         }
     }
     
-    List<Document> findByFields(final int limit, final IndexReader reader, final Map<String, String> fieldValues) throws IOException {
+    List<Document> findByFields(final int limit, final IndexReader reader, final Query q) throws IOException {
         aboutFind();
         final ArrayList<Document> result = new ArrayList<>();
         final IndexSearcher searcher = new IndexSearcher(reader);
-        final BooleanQuery.Builder builder = new BooleanQuery.Builder();
-        for (final String fieldName : fieldValues.keySet()) {
-            builder.add(new TermQuery(new Term(fieldName, fieldValues.get(fieldName))), BooleanClause.Occur.MUST);
-        }
-        final TopDocs td = searcher.search(builder.build(), limit);
+        
+        final TopDocs td = searcher.search(q, limit);
         for (final ScoreDoc sd : td.scoreDocs) {
             result.add(reader.document(sd.doc));
         }
         return result;
+    }
+    
+    public BooleanQuery.Builder findByFieldsQuery(final Map<String, String> fieldValues) {
+        final BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        for (final String fieldName : fieldValues.keySet()) {
+            builder.add(new TermQuery(new Term(fieldName, fieldValues.get(fieldName))), BooleanClause.Occur.MUST);
+        }
+        return builder;
+    }
+    
+    public BooleanQuery.Builder findByFieldsQuery(final String ... fieldValues) {
+        final HashMap<String, String> map = new HashMap<>();
+        for(int i = 1; i < fieldValues.length; i+= 2) {
+            map.put(fieldValues[i-1], fieldValues[i]);
+        }
+        return findByFieldsQuery(map);
     }
 }
