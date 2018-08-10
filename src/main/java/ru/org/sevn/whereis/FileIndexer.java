@@ -46,18 +46,24 @@ public class FileIndexer {
     public static void main(String[] args) throws Exception {
         FileIndexer fi = new FileIndexer();
         fi.processDir("zzz", new File("/home/sevn-arc/docs").toPath());
+        fi.processDir("kkk", new File("/home/sevn-arc/docs2").toPath());
         
         try {
             System.out.println("<???");
-            DocUtil.printDoc(fi.getIndexer().find(10, "test*"));
+            DocUtil.printDoc(fi.getIndexer().find(10, MetaParam.strName("meta:author"), "вальтер*"));
             System.out.println("???>");
         } catch (ParseException ex) {
             Logger.getLogger(Indexer.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
         DocUtil.printDoc(fi.getIndexer().findByField(10, MetaParam.ID, "zzz:"));
+        
         //DocUtil.printDoc(fi.getIndexer().findByFields(10, MetaParam.ID, "zzz:", MetaParam.STORE_ID, "zzz"));
         //DocUtil.printDoc(fi.getIndexer().findByFields(10, MetaParam.STORE_ID, "zzz"));
         //DocUtil.printDoc(fi.getIndexer().find(10, "test*"));
+        
+//        System.out.println("$$$$$$$$$$$");
+//        DocUtil.printDoc(fi.getIndexer().findRange(10, MetaParam.longName(MetaParam.INDEXED_AT), Long.MIN_VALUE, System.currentTimeMillis()));
     }
 }
 //https://habr.com/post/277509/

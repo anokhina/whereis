@@ -15,6 +15,7 @@
  */
 package ru.org.sevn.whereis;
 
+import org.apache.lucene.analysis.standard.CaseSensitiveStandardAnalyzer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
@@ -50,7 +52,7 @@ import org.apache.tika.metadata.Metadata;
 //https://habr.com/post/277509/
 public class Indexer {
     
-    private final Analyzer analyzer = new StandardAnalyzer();
+    private final Analyzer analyzer = new /*CaseSensitive*/StandardAnalyzer();
     private final Directory index = new RAMDirectory();
     
     
@@ -78,18 +80,31 @@ public class Indexer {
     void add(final IndexWriter w, final Metadata metadata) throws IOException {
         final Document doc = new Document();
         for (final String n : metadata.names()) {
-            doc.add(getField(n, metadata.get(n)));
+            addFields(doc, getField(n, metadata.get(n)));
             System.out.println("==" + n + "=" + metadata.get(n));
         }
         //w.addDocument(doc);
         w.updateDocument(new Term (MetaParam.ID, metadata.get(MetaParam.ID)), doc); 
     }
     
-    private IndexableField getField(final String n, final String c) {
-        if (MetaParam.TITLE.equals(n) || MetaParam.TEXT.equals(n)) {
-            return new TextField(n, c, isStoreField(n));
+    private void addFields(final Document doc, final IndexableField ... fields) {
+        for (final IndexableField f : fields) {
+            doc.add(f);
         }
-        return new StringField(n, c, isStoreField(n));
+    }
+    
+    private IndexableField[] getField(final String n, final String c) {
+        switch(n) {
+            case MetaParam.TITLE:
+            case MetaParam.TEXT:
+                return new IndexableField[] { new TextField(n, c, isStoreField(n)), new TextField(MetaParam.strName(n), c.toLowerCase(), Field.Store.NO) };
+            case MetaParam.FILE_CREATIONTIME:
+            case MetaParam.FILE_LASTACCESSTIME:
+            case MetaParam.FILE_LASTMODIFIEDTIME:
+            case MetaParam.INDEXED_AT:
+                return new IndexableField[] { new LongPoint(MetaParam.LONG_ + n, Long.valueOf(c)), new StringField(n, c, isStoreField(n)) };
+        }
+        return new IndexableField[] { new StringField(n, c, isStoreField(n)), new StringField(MetaParam.strName(n), c.toLowerCase(), Field.Store.NO) };
     }
     
     private Field.Store isStoreField(final String n) {
@@ -102,9 +117,16 @@ public class Indexer {
     protected void aboutFind() throws IOException {}
 
     public List<Document> find(final int hitsPerPage, final String querystr) throws IOException, ParseException {
-        aboutFind();
-        Query q = new QueryParser(MetaParam.FILE_NAME, analyzer).parse(querystr);//TODO
+        return find(hitsPerPage, MetaParam.FILE_NAME, querystr);
+    }
+    
+    public List<Document> find(final int hitsPerPage, final String defaultField, final String querystr) throws IOException, ParseException {
+        Query q = new QueryParser(defaultField, analyzer).parse(querystr);//TODO
         return find(hitsPerPage, q);
+    }
+    
+    public List<Document> findRange(final int hitsPerPage, final String fieldName, final Long from, final Long to) throws IOException {
+        return find(hitsPerPage, LongPoint.newRangeQuery(fieldName, from, to));
     }
     
     public List<Document> find(final int hitsPerPage, final Query q) throws IOException {

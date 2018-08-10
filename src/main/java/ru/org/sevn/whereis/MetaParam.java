@@ -34,5 +34,13 @@ public class MetaParam {
     public static final String FILE_SIZE = "file:size";
     public static final String FILE_NAME = "file:name";
     public static final String FILE_ = "file:";
-    
+    public static final String STR_ = "str:";
+    public static final String LONG_ = "long:";
+ 
+    public static String longName(final String n) {
+        return MetaParam.LONG_ + n;
+    }
+    public static String strName(final String n) {
+        return MetaParam.STR_ + n;
+    }
 }
