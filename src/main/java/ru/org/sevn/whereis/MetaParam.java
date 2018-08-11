@@ -23,6 +23,7 @@ public class MetaParam {
     public static final String TITLE = "title";
     public static final String INDEXED_AT = "indexedAt";
     
+    public static final String FILE_CHECK_SUM = "file:checkSum";
     public static final String FILE_CREATIONTIME = "file:creationTime";
     public static final String FILE_LASTACCESSTIME = "file:lastAccessTime";
     public static final String FILE_LASTMODIFIEDTIME = "file:lastModifiedTime";
@@ -39,6 +40,7 @@ public class MetaParam {
     
     public static final String[] FIELDS = new String[] {
         ID, STORE_ID, PATH, TEXT, TITLE, INDEXED_AT, 
+        FILE_CHECK_SUM,
         FILE_CREATIONTIME, FILE_LASTMODIFIEDTIME,
         FILE_NAME, FILE_SIZE,
         FILE_ISDIRECTORY

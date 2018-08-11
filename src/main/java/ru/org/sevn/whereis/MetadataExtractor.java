@@ -25,6 +25,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.security.MessageDigest;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.bind.DatatypeConverter;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -80,7 +84,23 @@ public class MetadataExtractor {
         return new TikaConfig(XMLReaderUtils.getDocumentBuilder().parse(stream));
     }
     
+    private String getCheckSum(final Path path) {
+        byte[] b;
+        try {
+            b = Files.readAllBytes(path);
+            byte[] hash = MessageDigest.getInstance("MD5").digest(b);
+            return DatatypeConverter.printHexBinary(hash);
+        } catch (Exception ex) {
+            Logger.getLogger(MetadataExtractor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
     private void readFileAttr(final Path path, final BasicFileAttributes attr, final Metadata metadata) throws IOException {
+        final String checkSum = getCheckSum(path);
+        if (checkSum != null) {
+            metadata.add(MetaParam.FILE_CHECK_SUM, checkSum);
+        }
         metadata.add(MetaParam.FILE_CREATIONTIME, str(attr.creationTime()));
         //metadata.add(MetaParam.FILE_LASTACCESSTIME, str(attr.lastAccessTime()));
         metadata.add(MetaParam.FILE_LASTMODIFIEDTIME, str(attr.lastModifiedTime()));
