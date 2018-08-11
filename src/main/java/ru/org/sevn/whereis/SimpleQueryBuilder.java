@@ -26,6 +26,24 @@ public class SimpleQueryBuilder {
         return add(fieldName, QueryParser.escape(v));
     }
     
+    public SimpleQueryBuilder adds(final String ...str) {
+        if (str != null) {
+            for(int i = 1; i < str.length; i+=2) {
+                add(str[i-1], str[i]);
+            }
+        }
+        return this;
+    }
+    
+    public SimpleQueryBuilder addRanges(final String ...str) {
+        if (str != null) {
+            for(int i = 2; i < str.length; i+=3) {
+                addRange(str[i-2], Long.valueOf(str[i-1]), Long.valueOf(str[i]));
+            }
+        }
+        return this;
+    }
+    
     public SimpleQueryBuilder add(final String fieldName, final String v) {
         if (stringBuilder.length() > 0) {
             stringBuilder.append(" AND ");

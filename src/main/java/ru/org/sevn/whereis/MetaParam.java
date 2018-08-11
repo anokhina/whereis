@@ -36,6 +36,13 @@ public class MetaParam {
     public static final String FILE_ = "file:";
     public static final String STR_ = "str:";
     public static final String LONG_ = "long:";
+    
+    public static final String[] FIELDS = new String[] {
+        ID, STORE_ID, PATH, TEXT, TITLE, INDEXED_AT, 
+        FILE_CREATIONTIME, FILE_LASTMODIFIEDTIME,
+        FILE_NAME, FILE_SIZE,
+        FILE_ISDIRECTORY
+    };
  
     public static String longName(final String n) {
         return MetaParam.LONG_ + n;
