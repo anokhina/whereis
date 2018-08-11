@@ -48,6 +48,7 @@ public class FileIndexer {
         final FileIndexerProcessor fileIndexerProcessor = new FileIndexerProcessor(indexTime, storeid, path, indexer, metadataExtractor);
         
         fileIndexerProcessor.startIndexing(path, new FileWalker(fileIndexerProcessor, EXCLUDE_FILE_MARKER));
+        fileIndexerProcessor.getIndexer().commit();
         removeNotExisted(indexTime, storeid);
     }
     
