@@ -22,11 +22,15 @@ public class SimpleQueryBuilder {
     
     private final StringBuilder stringBuilder = new StringBuilder();
     
+    public SimpleQueryBuilder addEsc(final String fieldName, final String v) {
+        return add(fieldName, QueryParser.escape(v));
+    }
+    
     public SimpleQueryBuilder add(final String fieldName, final String v) {
         if (stringBuilder.length() > 0) {
             stringBuilder.append(" AND ");
         }
-        stringBuilder.append(QueryParser.escape(fieldName)).append(":").append(QueryParser.escape(v)).append(" ");
+        stringBuilder.append(QueryParser.escape(fieldName)).append(":").append(v).append(" ");
         return this;
     }
     public SimpleQueryBuilder addRange(final String fieldName, final long from, final long to) {

@@ -27,6 +27,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.store.FSDirectory;
 
 public class FileIndexer {
 
@@ -75,6 +76,7 @@ public class FileIndexer {
 
     public static void main(String[] args) throws Exception {
         FileIndexer fi = new FileIndexer();
+        fi.getIndexer().setIndex(FSDirectory.open(new File("wherisdb").toPath()));
         fi.processDir(System.currentTimeMillis(), "zzz", new File("/home/sevn-arc/docs").toPath());
         fi.processDir(System.currentTimeMillis(), "zzz", new File("/home/sevn-arc/docs2").toPath());
         
