@@ -66,7 +66,7 @@ public class WhereIs {
         formatter.printUsage(pw, formatter.getWidth(), "", dbOptions(new Options()));
         pw.append("]").append("\n");
         pw.append("\nSearch in indexed:\n").append(usg).append("[s \"query\"" );
-        formatter.printUsage(pw, formatter.getWidth(), "", dbOptions(queryOptions(new Options())));
+        formatter.printUsage(pw, formatter.getWidth(), "", dbOptions(linesOptions(queryOptions(new Options()))));
         pw.append("]").append("\n");
         pw.append("\nBuild query string:\n").append(usg).append("[q ");
         formatter.printUsage(pw, formatter.getWidth(), "", queryOptions(new Options()));
@@ -77,7 +77,7 @@ public class WhereIs {
         pw.append("]").append("\n");
 
         pw.append("\n");
-        formatter.printOptions(pw, formatter.getWidth(), dbOptions(queryOptions(new Options())), formatter.getLeftPadding(), formatter.getDescPadding());        
+        formatter.printOptions(pw, formatter.getWidth(), dbOptions(linesOptions(queryOptions(new Options()))), formatter.getLeftPadding(), formatter.getDescPadding());        
         pw.flush();
         
     }
@@ -106,15 +106,29 @@ public class WhereIs {
         }
     }
     
+    private final static int DEFAULT_LINES = 10;
     public static void searchIt(final String args[]) {
         if (args.length < 1) {
             printUsage();
         } else {
             if (args.length > 1) {
+                int lines = DEFAULT_LINES;
                 try {
                     final CommandLine line = new DefaultParser().parse( 
-                            queryOptions(dbOptions(new Options())), Arrays.copyOfRange(args, 1, args.length) );
+                            queryOptions(linesOptions(dbOptions(new Options()))), Arrays.copyOfRange(args, 1, args.length) );
                     final CompoundIndexFinder fi = new CompoundIndexFinder();
+                    if (line.hasOption("l")) {
+                        for(final String l : line.getOptionValues("l")) {
+                            try {
+                                lines = Integer.valueOf(l);
+                                if (lines < 0) {
+                                    lines = DEFAULT_LINES;
+                                }
+                            } catch (Exception e) {
+                                System.err.println( "Parsing query failed for -l.  Reason: " + e.getMessage() );
+                            }
+                        }
+                    }
                     if (line.hasOption("db")) {
                         for(final String dbpath : line.getOptionValues("db")) {
                             fi.add(new IndexFinder().setIndex(FSDirectory.open(new File(dbpath).toPath())));
@@ -128,9 +142,10 @@ public class WhereIs {
                     
                     final Query q = new QueryParser(MetaParam.ID, new CaseSensitiveStandardAnalyzer()).parse(sqb.build(args[0]));
                     System.out.println("Query=" + q.toString(""));
+                    System.out.println("limit=" + lines);
                     
                     System.out.println("<???");
-                    DocUtil.printDoc(fi.find(10, q).get());
+                    DocUtil.printDoc(fi.find(lines, q).get());
                     System.out.println("???>");
                 }
                 catch( ParseException exp ) {
@@ -139,12 +154,18 @@ public class WhereIs {
                     System.err.println( "Search failed.  Reason: " + ex.getMessage() );
                 } catch (org.apache.lucene.queryparser.classic.ParseException ex) {
                     System.err.println( "Parsing query failed.  Reason: " + ex.getMessage() );
-                }
+                } 
                 
             } else {
                 
             }
         }
+    }
+    
+    private static Options linesOptions(final Options options) {
+        return options.addOption(
+            Option.builder("l").numberOfArgs(1).argName("num").desc("max lines in result").build()
+        );
     }
     
     private static Options dbOptions(final Options options) {

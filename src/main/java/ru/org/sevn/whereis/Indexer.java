@@ -70,7 +70,9 @@ public class Indexer extends IndexFinder {
         final Document doc = new Document();
         for (final String n : metadata.names()) {
             addFields(doc, getField(n, metadata.get(n)));
-            System.out.println("==" + n + "=" + metadata.get(n));
+            if (MetaParam.PATH.equals(n)) {
+                System.out.println("==" + n + "=" + metadata.get(n));
+            }
         }
         //w.addDocument(doc);
         w.updateDocument(new Term (MetaParam.ID, metadata.get(MetaParam.ID)), doc); 

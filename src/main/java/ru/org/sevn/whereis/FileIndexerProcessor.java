@@ -42,6 +42,7 @@ public class FileIndexerProcessor implements FileProcessor {
         metadata.add(MetaParam.ID, MetadataExtractor.makeId(storeId, root, path));
         metadata.add(MetaParam.STORE_ID, storeId);
         metadata.add(MetaParam.PATH, path.toString());
+        metadata.add(MetaParam.INDEX_ID, "1");
         indexer.index(addIndexInfo(metadata));
         
         Files.walkFileTree(path, fileWalker);
