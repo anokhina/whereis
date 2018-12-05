@@ -140,7 +140,10 @@ public class WhereIs {
                     queryCommandLine(sqb, line);
                     sqb.build(args[0]);
                     
-                    final Query q = new QueryParser(MetaParam.ID, new CaseSensitiveStandardAnalyzer()).parse(sqb.build(args[0]));
+                    final QueryParser qp = new QueryParser(MetaParam.ALL, new CaseSensitiveStandardAnalyzer());
+                    qp.setAllowLeadingWildcard(true);
+                    //PhraseQuery pq = new PhraseQuery(field, args);
+                    final Query q = qp.parse(sqb.build(args[0]));
                     System.out.println("Query=" + q.toString(""));
                     System.out.println("limit=" + lines);
                     

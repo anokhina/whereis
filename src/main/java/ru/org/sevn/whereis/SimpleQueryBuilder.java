@@ -65,7 +65,11 @@ public class SimpleQueryBuilder {
     
     public String build(final String prefix) {
         if (prefix.length() > 0) {
-            return prefix + " AND " + stringBuilder.toString();
+            if (stringBuilder.length() > 0) {
+                return prefix + " AND " + stringBuilder.toString();
+            } else {
+                return prefix;
+            }
         }
         return stringBuilder.toString();
     }

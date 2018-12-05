@@ -52,12 +52,7 @@ public class FileWalker extends SimpleFileVisitor<Path> {
     @Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
         if (canWalk(file, attrs)) {
-            try {
-                fileProcessor.processFile(file, attrs);
-            } catch (Exception ex) {
-                //TODO
-                Logger.getLogger(FileWalker.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            processFile(file, attrs);
             return CONTINUE;
         } else {
             return CONTINUE;
@@ -67,9 +62,19 @@ public class FileWalker extends SimpleFileVisitor<Path> {
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
         if (canWalk(dir, attrs)) {
+            processFile(dir, attrs);
             return CONTINUE;
         }
         return SKIP_SUBTREE;
+    }
+    
+    private void processFile(Path file, BasicFileAttributes attrs) {
+        try {
+            fileProcessor.processFile(file, attrs);
+        } catch (Exception ex) {
+            //TODO
+            Logger.getLogger(FileWalker.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override

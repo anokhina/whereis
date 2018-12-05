@@ -97,15 +97,17 @@ public class MetadataExtractor {
     }
     
     private void readFileAttr(final Path path, final BasicFileAttributes attr, final Metadata metadata) throws IOException {
-        final String checkSum = getCheckSum(path);
-        if (checkSum != null) {
-            metadata.add(MetaParam.FILE_CHECK_SUM, checkSum);
+        metadata.add(MetaParam.FILE_ISDIRECTORY, str(attr.isDirectory()));
+        if (!attr.isDirectory()) {
+            final String checkSum = getCheckSum(path);
+            if (checkSum != null) {
+                metadata.add(MetaParam.FILE_CHECK_SUM, checkSum);
+            }
         }
         metadata.add(MetaParam.FILE_CREATIONTIME, str(attr.creationTime()));
         //metadata.add(MetaParam.FILE_LASTACCESSTIME, str(attr.lastAccessTime()));
         metadata.add(MetaParam.FILE_LASTMODIFIEDTIME, str(attr.lastModifiedTime()));
 
-        metadata.add(MetaParam.FILE_ISDIRECTORY, str(attr.isDirectory()));
         metadata.add(MetaParam.FILE_ISOTHER, str(attr.isOther()));
         metadata.add(MetaParam.FILE_ISREGULARFILE, str(attr.isRegularFile()));
         metadata.add(MetaParam.FILE_ISSYMBOLICLINK, str(attr.isSymbolicLink()));
@@ -130,10 +132,11 @@ public class MetadataExtractor {
     public Metadata parse(final String storeId, final Path root, final Path path, final BasicFileAttributes attr) throws IOException, SAXException, TikaException {
         final Metadata metadata = new Metadata();
         metadata.add(MetaParam.PATH, path.toAbsolutePath().toString());
+        metadata.add(MetaParam.SPATH, path.toAbsolutePath().toString().toLowerCase().replace("/", " ").replace("_", " "));
         metadata.add(MetaParam.STORE_ID, storeId);
         metadata.add(MetaParam.ID, makeId(storeId, root, path));
         readFileAttr(path, attr, metadata);
-        if (!attr.isDirectory()) {
+        if (!attr.isDirectory() && attr.size() > 0) {
         
             final BodyContentHandler handler = new BodyContentHandler(-1);
             final TikaConfig tc = getTikaConfig();
@@ -142,10 +145,23 @@ public class MetadataExtractor {
 
             try (final InputStream input = new FileInputStream(path.toFile())) {
                 parser.parse(input, handler, metadata, parseContext);
+            } catch (Exception e) {
+                System.err.println(">>>ERROR:" + path);
+                e.printStackTrace();
             }
             metadata.add(MetaParam.TEXT, handler.toString().replaceAll("\n|\r|\t", " "));
         }
+        final StringBuilder all = new StringBuilder();
+        for(final String n : metadata.names()) {
+            all.append(clear(metadata.get(n))).append(" ");
+        }
+        
+        metadata.add(MetaParam.ALL, all.toString());
         return metadata;
+    }
+    
+    private String clear(final String all) {
+        return all.toLowerCase().replace("/", " ").replace("_", " ");
     }
     
     static String makeId(final String storeId, final Path root, final Path path) {

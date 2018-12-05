@@ -19,6 +19,8 @@ public class MetaParam {
     public static final String STORE_ID = "storeid";
     public static final String ID = "id";
     public static final String PATH = "path";
+    public static final String SPATH = "spath";
+    public static final String ALL = "all";
     public static final String TEXT = "text";
     public static final String TITLE = "title";
     public static final String INDEXED_AT = "indexedAt";

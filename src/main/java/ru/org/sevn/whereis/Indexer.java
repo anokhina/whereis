@@ -16,6 +16,8 @@
 package ru.org.sevn.whereis;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -85,24 +87,50 @@ public class Indexer extends IndexFinder {
     }
     
     private IndexableField[] getField(final String n, final String c) {
+        final Field.Store isStoreField = isStoreField(n);
         switch(n) {
+            case MetaParam.ALL:
+            case MetaParam.SPATH:
             case MetaParam.TITLE:
             case MetaParam.TEXT:
-                return new IndexableField[] { new TextField(n, c, isStoreField(n)), new TextField(MetaParam.strName(n), c.toLowerCase(), Field.Store.NO) };
+                return new IndexableField[] { new TextField(n, trim(n, isStoreField, c), isStoreField), new TextField(MetaParam.strName(n), toSearchable(c), Field.Store.NO) };
             case MetaParam.FILE_CREATIONTIME:
             case MetaParam.FILE_LASTACCESSTIME:
             case MetaParam.FILE_LASTMODIFIEDTIME:
             case MetaParam.INDEXED_AT:
-                return new IndexableField[] { new LongPoint(MetaParam.LONG_ + n, Long.valueOf(c)), new StringField(n, c, isStoreField(n)) };
+                return new IndexableField[] { new LongPoint(MetaParam.LONG_ + n, Long.valueOf(c)), new StringField(n, c, isStoreField) };
         }
-        return new IndexableField[] { new StringField(n, c, isStoreField(n)), new StringField(MetaParam.strName(n), c.toLowerCase(), Field.Store.NO) };
+        return new IndexableField[] { new StringField(n, trim(n, isStoreField, c), isStoreField), new TextField(MetaParam.strName(n), toSearchable(c), Field.Store.NO) };
     }
     
     private Field.Store isStoreField(final String n) {
-        if (MetaParam.TEXT.equals(n)) {
-            return Field.Store.NO;
+        switch(n) {
+            case MetaParam.ALL:
+            case MetaParam.SPATH:
+            case MetaParam.TEXT:
+                return Field.Store.NO;
         }
         return Field.Store.YES;
     }
     
+    private String toSearchable(String s) {
+        return s.toLowerCase().replace("/", " ").replace("_", " ");
+    }
+    
+    private static final int TERM_LENGTH = 32765;
+    
+    private String trim(final String n, final Field.Store isStoreField, String s) {
+        if (isStoreField == Field.Store.YES) {
+            try {
+                final byte[] bytes = s.getBytes("UTF-8");
+                if (bytes.length > TERM_LENGTH) {
+                    System.out.println(">>>TRIMMED:" + n);
+                    System.err.println(">>>TRIMMED:" + n + ":" + s);
+                    return new String(Arrays.copyOf(bytes, TERM_LENGTH), "UTF-8");
+                }
+            } catch (UnsupportedEncodingException ex) {
+            }
+        }
+        return s;
+    }
 }
