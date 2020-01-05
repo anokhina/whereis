@@ -48,14 +48,14 @@ public class SimpleQueryBuilder {
         if (stringBuilder.length() > 0) {
             stringBuilder.append(" AND ");
         }
-        stringBuilder.append(QueryParser.escape(fieldName)).append(":").append(v).append(" ");
+        stringBuilder.append(QueryParser.escape(fieldName)).append(":").append(v);//.append(" ");
         return this;
     }
     public SimpleQueryBuilder addRange(final String fieldName, final long from, final long to) {
         if (stringBuilder.length() > 0) {
             stringBuilder.append(" AND ");
         }
-        stringBuilder.append(QueryParser.escape(fieldName)).append(":").append("[").append(from).append(" TO ").append(to).append("]").append(" ");
+        stringBuilder.append(QueryParser.escape(fieldName)).append(":").append("[").append(from).append(" TO ").append(to).append("]");//.append(" ");
         return this;
     }
     

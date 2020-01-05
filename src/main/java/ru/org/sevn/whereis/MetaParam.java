@@ -40,6 +40,9 @@ public class MetaParam {
     public static final String FILE_ = "file:";
     public static final String STR_ = "str:";
     public static final String LONG_ = "long:";
+
+    public static final String OBJ_ = "obj:";
+    public static final String CLS = "cls";
     
     public static final String[] FIELDS = new String[] {
         INDEX_ID,

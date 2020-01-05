@@ -28,11 +28,13 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopScoreDocCollector;
+import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 
@@ -60,7 +62,7 @@ public class IndexFinder {
         final ArrayList<Document> ret = new ArrayList<>();
         try (IndexReader reader = DirectoryReader.open(index)) {
             final IndexSearcher searcher = new IndexSearcher(reader);
-            final TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage);
+            final TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, hitsPerPage);
             
             searcher.search(q, collector);
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
@@ -119,18 +121,39 @@ public class IndexFinder {
     
     public static BooleanQuery.Builder findByFieldsQuery(final Map<String, String> fieldValues) {
         final BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        return findByFieldsQueryEq(builder, fieldValues);
+    }
+    
+    public static BooleanQuery.Builder findByFieldsQueryEq(BooleanQuery.Builder builder, final Map<String, String> fieldValues) {
         for (final String fieldName : fieldValues.keySet()) {
             builder.add(new TermQuery(new Term(fieldName, fieldValues.get(fieldName))), BooleanClause.Occur.MUST);
         }
         return builder;
     }
     
+    public static BooleanQuery.Builder findByFieldsQueryLikePrefix(BooleanQuery.Builder builder, final Map<String, String> fieldValues) {
+        for (final String fieldName : fieldValues.keySet()) {
+            builder.add(new PrefixQuery(new Term(fieldName, fieldValues.get(fieldName))), BooleanClause.Occur.MUST);
+        }
+        return builder;
+    }
+    
+    public static BooleanQuery.Builder findByFieldsQueryLike(BooleanQuery.Builder builder, final Map<String, String> fieldValues) {
+        for (final String fieldName : fieldValues.keySet()) {
+            builder.add(new WildcardQuery(new Term(fieldName, fieldValues.get(fieldName))), BooleanClause.Occur.MUST);
+        }
+        return builder;
+    }
+
     public static BooleanQuery.Builder findByFieldsQuery(final String ... fieldValues) {
+        return findByFieldsQuery(toMap(fieldValues));
+    }
+    
+    public static HashMap<String, String> toMap(final String ... fieldValues) {
         final HashMap<String, String> map = new HashMap<>();
         for(int i = 1; i < fieldValues.length; i+= 2) {
             map.put(fieldValues[i-1], fieldValues[i]);
         }
-        return findByFieldsQuery(map);
+        return map;
     }
-    
 }

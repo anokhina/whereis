@@ -25,6 +25,7 @@ import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.StopFilter;
 import org.apache.lucene.analysis.StopwordAnalyzerBase;
+import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.WordlistLoader;
 
@@ -99,15 +100,10 @@ public class CaseSensitiveStandardAnalyzer extends StopwordAnalyzerBase {
     TokenStream tok = new StandardFilter(src);
     //tok = new LowerCaseFilter(tok);
     tok = new StopFilter(tok, stopwords);
-    return new TokenStreamComponents(src, tok) {
-      @Override
-      protected void setReader(final Reader reader) {
-        // So that if maxTokenLength was changed, the change takes
-        // effect next time tokenStream is called:
-        src.setMaxTokenLength(CaseSensitiveStandardAnalyzer.this.maxTokenLength);
-        super.setReader(reader);
-      }
-    };
+    return new TokenStreamComponents(r -> {
+      src.setMaxTokenLength(CaseSensitiveStandardAnalyzer.this.maxTokenLength);
+      src.setReader(r);
+    }, tok);    
   }
 
   @Override
@@ -117,4 +113,15 @@ public class CaseSensitiveStandardAnalyzer extends StopwordAnalyzerBase {
     return result;
   }
     
+    public class StandardFilter extends TokenFilter {
+
+        public StandardFilter(TokenStream in) {
+            super(in);
+        }
+
+        @Override
+        public final boolean incrementToken() throws IOException {
+            return input.incrementToken();
+        }
+    }
 }

@@ -25,7 +25,6 @@ import org.apache.commons.cli.*;
 import org.apache.lucene.analysis.standard.CaseSensitiveStandardAnalyzer;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.store.FSDirectory;
 
 public class WhereIs {
     public static void printUsage() {
@@ -93,7 +92,7 @@ public class WhereIs {
                     dbpath = line.getOptionValue("db");
                 }
                 final FileIndexer fi = new FileIndexer();
-                fi.getIndexer().setIndex(FSDirectory.open(new File(dbpath).toPath()));
+                Util.configDbPath(fi.getIndexer(), dbpath);
                 fi.processDir(System.currentTimeMillis(), args[0], new File(args[1]).toPath());
                 System.out.println("Indexing finished.");
             }
@@ -131,10 +130,10 @@ public class WhereIs {
                     }
                     if (line.hasOption("db")) {
                         for(final String dbpath : line.getOptionValues("db")) {
-                            fi.add(new IndexFinder().setIndex(FSDirectory.open(new File(dbpath).toPath())));
+                            fi.add(new IndexFinder().setIndex(Util.openDb(dbpath)));
                         }
                     } else {
-                        fi.add(new IndexFinder().setIndex(FSDirectory.open(new File("wherisdb").toPath())));
+                        fi.add(new IndexFinder().setIndex(Util.openDb("wherisdb")));
                     }
                     final SimpleQueryBuilder sqb = new SimpleQueryBuilder();
                     queryCommandLine(sqb, line);
