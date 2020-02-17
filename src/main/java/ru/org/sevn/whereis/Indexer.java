@@ -23,12 +23,14 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.util.BytesRef;
 import org.apache.tika.metadata.Metadata;
 
 //https://github.com/c0rp-aubakirov/lucene-tutorial/blob/master/src/main/java/kz/kaznu/lucene/BasicSearchExamples.java
@@ -86,24 +88,34 @@ public class Indexer extends IndexFinder {
         }
     }
     
-    private IndexableField[] getField(final String n, final String c) {
+    protected IndexableField[] getField(final String n, final String c) {
         final Field.Store isStoreField = isStoreField(n);
         switch(n) {
             case MetaParam.ALL:
             case MetaParam.SPATH:
             case MetaParam.TITLE:
             case MetaParam.TEXT:
-                return new IndexableField[] { new TextField(n, trim(n, isStoreField, c), isStoreField), new TextField(MetaParam.strName(n), toSearchable(c), Field.Store.NO) };
+                return new IndexableField[] { 
+                    new TextField(n, trim(n, isStoreField, c), isStoreField), 
+                    new TextField(MetaParam.strName(n), toSearchable(c), Field.Store.NO) 
+                };
             case MetaParam.FILE_CREATIONTIME:
             case MetaParam.FILE_LASTACCESSTIME:
             case MetaParam.FILE_LASTMODIFIEDTIME:
             case MetaParam.INDEXED_AT:
-                return new IndexableField[] { new LongPoint(MetaParam.LONG_ + n, Long.valueOf(c)), new StringField(n, c, isStoreField) };
+                return new IndexableField[] { 
+                    new LongPoint(MetaParam.LONG_ + n, Long.valueOf(c)), 
+                    new StringField(n, c, isStoreField) 
+                };
         }
-        return new IndexableField[] { new StringField(n, trim(n, isStoreField, c), isStoreField), new TextField(MetaParam.strName(n), toSearchable(c), Field.Store.NO) };
+        return new IndexableField[] { 
+            new StringField(n, trim(n, isStoreField, c), isStoreField), 
+            new TextField(MetaParam.strName(n), toSearchable(c), Field.Store.NO),
+            new SortedDocValuesField(n, new BytesRef(c))
+        };
     }
     
-    private Field.Store isStoreField(final String n) {
+    protected Field.Store isStoreField(final String n) {
         switch(n) {
             case MetaParam.ALL:
             case MetaParam.SPATH:
@@ -113,13 +125,13 @@ public class Indexer extends IndexFinder {
         return Field.Store.YES;
     }
     
-    private String toSearchable(String s) {
+    protected String toSearchable(String s) {
         return s.toLowerCase().replace("/", " ").replace("_", " ");
     }
     
     private static final int TERM_LENGTH = 32765;
     
-    private String trim(final String n, final Field.Store isStoreField, String s) {
+    protected String trim(final String n, final Field.Store isStoreField, String s) {
         if (isStoreField == Field.Store.YES) {
             try {
                 final byte[] bytes = s.getBytes("UTF-8");

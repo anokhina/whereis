@@ -31,6 +31,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopScoreDocCollector;
@@ -41,6 +42,16 @@ import org.apache.lucene.store.RAMDirectory;
 public class IndexFinder {
     
     private Directory index = new RAMDirectory();
+    
+    private Sort sort;
+
+    public Sort getSort() {
+        return sort;
+    }
+
+    public void setSort(Sort sort) {
+        this.sort = sort;
+    }
     
     public <T extends IndexFinder> T setIndex(final Directory index) {
         this.index = index;
@@ -62,6 +73,12 @@ public class IndexFinder {
         final ArrayList<Document> ret = new ArrayList<>();
         try (IndexReader reader = DirectoryReader.open(index)) {
             final IndexSearcher searcher = new IndexSearcher(reader);
+            
+            final TopDocs td = find(searcher, q, hitsPerPage);
+            for (final ScoreDoc sd : td.scoreDocs) {
+                ret.add(reader.document(sd.doc));
+            }            
+            /*
             final TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, hitsPerPage);
             
             searcher.search(q, collector);
@@ -70,6 +87,7 @@ public class IndexFinder {
             for (int i = 0; i < hits.length; ++i) {
                 ret.add(searcher.doc(hits[i].doc));
             }
+            */
         }
         return ret;
     }
@@ -84,11 +102,19 @@ public class IndexFinder {
         }
     }
     
+    private TopDocs find(final IndexSearcher searcher, final Query q, final int limit) throws IOException {
+        if (getSort() != null) {
+            return searcher.search(q, limit, getSort());
+        } else {
+            return searcher.search(q, limit);
+        }
+    }
+    
     List<Document> findByField(final int limit, final IndexReader reader, final String fieldName, final String text) throws IOException {
         aboutFind();
         final ArrayList<Document> result = new ArrayList<>();
         final IndexSearcher searcher = new IndexSearcher(reader);
-        final TopDocs td = searcher.search(
+        final TopDocs td = find(searcher,
             new BooleanQuery.Builder().add(new TermQuery(new Term(fieldName, text)), BooleanClause.Occur.MUST).build()
                 , limit);
         for (final ScoreDoc sd : td.scoreDocs) {
@@ -112,7 +138,7 @@ public class IndexFinder {
         final ArrayList<Document> result = new ArrayList<>();
         final IndexSearcher searcher = new IndexSearcher(reader);
         
-        final TopDocs td = searcher.search(q, limit);
+        final TopDocs td = find(searcher, q, limit);
         for (final ScoreDoc sd : td.scoreDocs) {
             result.add(reader.document(sd.doc));
         }

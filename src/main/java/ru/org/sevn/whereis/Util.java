@@ -58,17 +58,11 @@ public class Util {
         return find(idxfinder, getQueryParser(), query, lines);
     }
     
-    public static List<Document> find(final IndexFinder idxfinder, final Query query, final int lines) throws ParseException, IOException {
-        return find(idxfinder, getQueryParser(), query, lines);
-    }
-
     public static List<Document> find(final IndexFinder idxfinder, final QueryParser qp, final String query, final int lines) throws ParseException, IOException {
-        return find(idxfinder, qp, qp.parse(query), lines);
+        return find(idxfinder, qp.parse(query), lines);
     }
     
-    public static List<Document> find(final IndexFinder idxfinder, final QueryParser qp, final Query q, final int lines) throws IOException {
-        final CompoundIndexFinder fi = new CompoundIndexFinder();
-        fi.add(idxfinder);
-        return fi.find(lines, q).get();
+    public static List<Document> find(final IndexFinder idxfinder, final Query q, final int lines) throws IOException {
+        return idxfinder.find(lines, q);
     }
 }
